@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Showcase Digital</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .container { width: 90%; max-width: 900px; margin: auto; padding: 20px; }
+        .logo {
+          position: absolute;
+          top: 30px;
+          left: 30px;
+          width: 120px;
+          margin-bottom: 20px;
+        }
+        .card { background: #f7f7f7; padding: 25px; border-radius: 10px; }
+        h1 { text-align: center; }
+        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; }
+        button { padding: 12px 20px; border: none; border-radius: 6px; background: #003bff; color: white; cursor: pointer; width:100%; }
+        button:hover { background: #0029aa; }
+        .hidden { display: none; }
+        .profile-preview { width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid #ccc;display:block;margin-bottom:10px; }
+    </style>
+</head>
+<body>
+
+<img src="vinix71.jpg" alt="Logo" class="logo">
+
+<div class="container">
+
+    <!-- HALAMAN 1 -->
+    <div id="page1" class="card">
+        <h1>Buat Showcase Digital Anda</h1>
+        <h3>Lengkapi Data Diri Anda</h3>
+
+        <form id="registerForm">
+
+            <label>Foto Profil Profesional</label>
+            <img id="previewImg" class="profile-preview hidden" alt="profile preview">
+            <input id="profilePic" type="file" accept="image/*">
+
+            <label>Nama Lengkap *</label>
+            <input id="fullName" type="text" required>
+
+            <label>E-mail *</label>
+            <input id="registerEmail" type="email" required>
+
+            <label>Password *</label>
+            <input id="registerPassword" type="password" required>
+
+            <label>Domisili *</label>
+            <input id="domisili" type="text" required>
+
+            <label>Nomor Telepon *</label>
+            <input id="phone" type="text" required>
+
+            <label>Link LinkedIn (Opsional)</label>
+            <input id="linkedin" type="text">
+
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <!-- HALAMAN 2 -->
+    <div id="page2" class="card hidden">
+        <h1>Tunjukkan Siapa Diri Anda (Personal Branding)</h1>
+
+        <label>Nama Universitas/Institusi *</label>
+        <input id="univ" type="text">
+
+        <label>Jurusan *</label>
+        <input id="jurusan" type="text">
+
+        <label>Semester *</label>
+        <input id="semester" type="number">
+
+        <label>Bidang Minat *</label>
+        <input id="interest" type="text" placeholder="Contoh: Product Manager, Data Scientist, UI/UX Designer">
+
+        <label>Ringkasan Diri *</label>
+        <textarea id="bio" rows="5"></textarea>
+
+        <button id="saveStep2">Simpan & Lanjut</button>
+    </div>
+
+    <!-- HALAMAN 3 -->
+    <div id="page3" class="card hidden">
+        <h1>Inventarisir Senjata Terbaik Anda</h1>
+
+        <label>Hard Skills *</label>
+        <textarea id="hardSkills" rows="5" placeholder="Contoh: Figma, Python, Copywriting..."></textarea>
+
+        <label>Soft Skills *</label>
+        <textarea id="softSkills" rows="5" placeholder="Contoh: Komunikasi, Kepemimpinan, Manajemen Waktu..."></textarea>
+
+        <button id="saveStep3">Lanjut ke Ringkasan</button>
+    </div>
+
+    <!-- HALAMAN 4 -->
+    <div id="page4" class="card hidden">
+        <h1>E-Portfolio Anda Siap Meluncur! 🚀</h1>
+        <p>Selamat! Semua data penting Anda telah tersimpan.<br>
+            Portofolio Anda sedang diproses dan siap digunakan.</p>
+        <button id="goDashboard">Akses Dashboard Portofolio</button>
+    </div>
+
+</div>
+
+<script type="module">
+import { register, uploadProfilePicture, updateEducation, updateSkills } from './main.js';
+
+let currentUserId = null; // akan di-set setelah register sukses
+
+function showPage(n) {
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    document.getElementById('page' + n).classList.remove('hidden');
+}
+window.nextPage = showPage; // jika perlu global
+
+/* preview image */
+// -------------------- REGISTER IMAGE PREVIEW -------------------- //
+const profileInput = document.getElementById('profilePic'); // <input type="file" id="profilePic">
+const preview = document.getElementById('previewImg');       // <img id="previewImg" class="hidden">
+
+if(profileInput && preview){
+  profileInput.addEventListener('change', () => {
+    const file = profileInput.files[0];
+    if(file){
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove('hidden');
+    }
+  });
+}
+
+
+/* STEP 1 - register + upload photo (if userId available) */
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('registerEmail').value.trim();
+    const pw = document.getElementById('registerPassword').value.trim();
+    const name = document.getElementById('fullName').value.trim();
+    const picture = document.getElementById('profilePic').files[0] || null;
+
+    const res = await register(email, pw, name);
+
+    if (!res.success) {
+        alert('Gagal register: ' + res.error);
+        return;
+    }
+
+    // if project requires email verification, res may indicate message verify_email
+    const userId = res.userId ?? null;
+    currentUserId = userId;
+    if (!userId) {
+        // email verification likely required — inform user and stop further auto-uploads
+        alert('Akun dibuat. Mohon cek email untuk verifikasi sebelum melanjutkan (upload foto & lengkapi profil).');
+        // still move to step2 but warn user they can't upload yet
+        showPage(2);
+        return;
+    }
+
+    // upload picture if provided
+    if (picture) {
+        const up = await uploadProfilePicture(userId, picture);
+        if (!up.success) {
+            console.warn('Upload picture failed:', up.error);
+            alert('Upload foto profil gagal: ' + up.error);
+            // don't stop; user can continue
+        }
+    }
+
+    // move to step 2
+    showPage(2);
+});
+
+/* STEP 2 - save education/personal branding */
+document.getElementById('saveStep2').addEventListener('click', async () => {
+    if (!currentUserId) {
+        // try read from localStorage (if available)
+        try { currentUserId = localStorage.getItem('userId'); } catch(e){}
+    }
+    if (!currentUserId) {
+        alert('Silakan verifikasi email/atau login terlebih dahulu agar perubahan tersimpan.');
+        return;
+    }
+
+    const data = {
+        university: document.getElementById('univ').value.trim(),
+        major: document.getElementById('jurusan').value.trim(),
+        semester: document.getElementById('semester').value.trim(),
+        interest: document.getElementById('interest').value.trim(),
+        bio: document.getElementById('bio').value.trim()
+    };
+
+    const upd = await updateEducation(currentUserId, data);
+    if (!upd.success) {
+        alert('Gagal menyimpan data pendidikan: ' + upd.error);
+        return;
+    }
+    showPage(3);
+});
+
+/* STEP 3 - save skills */
+document.getElementById('saveStep3').addEventListener('click', async () => {
+    if (!currentUserId) {
+        try { currentUserId = localStorage.getItem('userId'); } catch(e){}
+    }
+    if (!currentUserId) {
+        alert('Silakan verifikasi email/atau login terlebih dahulu agar perubahan tersimpan.');
+        return;
+    }
+
+    const skills = {
+        hard_skills: document.getElementById('hardSkills').value.trim(),
+        soft_skills: document.getElementById('softSkills').value.trim()
+    };
+
+    const upd = await updateSkills(currentUserId, skills);
+    if (!upd.success) {
+        alert('Gagal menyimpan skill: ' + upd.error);
+        return;
+    }
+    showPage(4);
+});
+
+/* go to dashboard button */
+document.getElementById('goDashboard').addEventListener('click', () => {
+    // redirect to dashboard (ubah URL sesuai kebutuhan)
+    window.location.href = 'dashboard.html';
+});
+</script>
+
+</body>
+</html>

@@ -35,6 +35,11 @@
     .nav-pages{display:flex;gap:8px;margin-top:18px}
     .nav-pages button{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
     .nav-pages button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .logo {
+          top: 30px;
+          left: 30px;
+          width: 120px;
+        }
     /* small responsive */
     @media (max-width:900px){
       .main-grid{grid-template-columns:1fr}
@@ -43,7 +48,7 @@
 </head>
 <body>
   <header>
-    <div class="brand">VINIX7</div>
+    <img src="vinix71.jpg" alt="Logo" class="logo">
     <nav>
       <a href="#" id="nav-home">Home</a>
       <a href="#" id="nav-skill">Skill Passport</a>
@@ -334,4 +339,5 @@ supabase.auth.onAuthStateChange((event, session)=>{
 })
 </script>
 </body>
+
 </html>
